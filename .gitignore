@@ -53,3 +53,9 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+run_main.sh
+run_test.sh
+.vscode
+main
+test
