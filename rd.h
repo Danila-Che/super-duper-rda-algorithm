@@ -35,6 +35,7 @@ typedef struct hash_node {
 #endif
 
 #define MRDA_MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MRDA_CEIL_DIV(a, b) (((a) + (b) - 1) / (b))
 
 int32_t mdra_pre_process(int32_t *trace, int32_t length) {
     int32_t result_length = 1;
@@ -110,7 +111,7 @@ void mrda_calculate_local_rd(int32_t *trace, int32_t *dist, int32_t start, int32
 }
 
 void mrda_run_reuse_distance_analysis(int32_t *trace, int32_t *dist, int trace_length, int fragment_length) {
-    int chunk_length = ceil((float)trace_length / fragment_length);
+    int chunk_length = MRDA_CEIL_DIV(trace_length, fragment_length);
     mrda_chunk *chunks = (mrda_chunk*)MRDA_MALLOC(chunk_length * sizeof(mrda_chunk));
 
     for (int i = 0; i < chunk_length; i++) {
