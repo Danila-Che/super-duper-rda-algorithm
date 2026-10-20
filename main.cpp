@@ -9,28 +9,17 @@ int main(int argc, char* argv[]) {
     // analyze trace
     // merage trace
 
-    int global_length = 8;
-    int local_length = 4;
+    int trace_length = 16;
+    int fragment_length = 4;
 
-    int *trace = new int[global_length] { 0, 1, 2, 0, 1, 3, 2, 0 };
-    int *dist = new int[global_length];
+    int *trace = new int[trace_length] { 0, 1, 2, 0, 1, 3, 2, 0, 0, 1, 2, 0, 1, 3, 2, 0 };
+    trace_length = mdra_pre_process(trace, trace_length);
 
-    int chunk_length = std::ceil((float)global_length / local_length);
+    int *dist = new int[trace_length]; // -1 -1 -1 -1 2 -1 3 3 3 2 2 2 3 3 3
 
-    mrda_chunk *chunks = new mrda_chunk[chunk_length];
+    mrda_run_reuse_distance_analysis(trace, dist, trace_length, fragment_length);
 
-    mrda_world world = {
-        .global_length = global_length,
-        .local_length = local_length,
-        .chunk_length = chunk_length,
-        .trace = trace,
-        .dist = dist,
-        .chunks = chunks
-    };
-
-    mrda_calculate_rd(world);
-
-    for (int i = 0; i < global_length; i++) {
+    for (int i = 0; i < trace_length; i++) {
         std::cout << dist[i] << " ";
     }
 
@@ -38,7 +27,6 @@ int main(int argc, char* argv[]) {
 
     delete[] trace;
     delete[] dist;
-    delete[] chunks;
 
     return 0;
 }

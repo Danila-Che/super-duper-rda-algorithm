@@ -9,9 +9,13 @@
 //   - fragmets table
 //   - hash table
 //   - local array
-// - meraging
+// - merging
 // - MPI
 // - CUDA
+
+// TODO:
+// [ ] add tests for unequal division into fragments
+// [ ] add tests for changing status
 
 TEST(preprocessing, pre_process) {
     std::array<int, 6> trace = { 0, 1, 2, 2, 2, 0  };
@@ -113,6 +117,46 @@ TEST(analyzing, calculate_local_rd_case_2) {
     mrda_calculate_local_rd(trace.data(), dist.data(), 4, 4);
 
     EXPECT_EQ(dist, ref_dist);
+}
+
+TEST(result, run_reuse_distance_analysis_case_0) {
+    std::array<int, 4> trace = { 0, 1, 2, 0 };
+    std::array<int, 4> actual_dist = { 0, 0, 0, 0 };
+    std::array<int, 4> expected_dist = { -1, -1, -1, 2 };
+
+    mrda_run_reuse_distance_analysis(trace.data(), actual_dist.data(), 4, 4);
+
+    EXPECT_EQ(actual_dist, expected_dist);
+}
+
+TEST(result, run_reuse_distance_analysis_case_1) {
+    std::array<int, 4> trace = { 0, 1, 2, 0 };
+    std::array<int, 4> actual_dist = { 0, 0, 0, 0 };
+    std::array<int, 4> expected_dist = { -1, -1, -1, -1 };
+
+    mrda_run_reuse_distance_analysis(trace.data(), actual_dist.data(), 4, 2);
+
+    EXPECT_EQ(actual_dist, expected_dist);
+}
+
+TEST(result, run_reuse_distance_analysis_case_2) {
+    std::array<int, 8> trace = { 0, 1, 2, 0, 1, 3, 2, 0 };
+    std::array<int, 8> actual_dist = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    std::array<int, 8> expected_dist = { -1, -1, -1, 2, -1, -1, -1, -1 };
+
+    mrda_run_reuse_distance_analysis(trace.data(), actual_dist.data(), 8, 4);
+
+    EXPECT_EQ(actual_dist, expected_dist);
+}
+
+TEST(result, run_reuse_distance_analysis_case_3) {
+    std::array<int, 8> trace = { 0, 1, 2, 0, 0, 1, 2, 0 };
+    std::array<int, 8> actual_dist = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    std::array<int, 8> expected_dist = { -1, -1, -1, 2, -1, -1, -1, 2 };
+
+    mrda_run_reuse_distance_analysis(trace.data(), actual_dist.data(), 8, 4);
+
+    EXPECT_EQ(actual_dist, expected_dist);
 }
 
 int main(int argc, char* argv[]) {

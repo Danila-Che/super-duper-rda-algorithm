@@ -28,14 +28,13 @@ typedef struct hash_node {
     struct hash_node *next;
 } hash_node;
 
-typedef struct {
-    int32_t global_length; // trace length, dist length
-    int32_t local_length; // local dist length
-    int32_t chunk_length;
-    int32_t *trace; // full trace
-    int32_t *dist; // full reuse distance
-    mrda_chunk *chunks;
-} mrda_world;
+#ifndef MRDA_MALLOC
+#include <stdlib.h>
+#define MRDA_MALLOC(sz) malloc(sz)
+#define MRDA_FREE(p) free(p)
+#endif
+
+#define MRDA_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 int32_t mdra_pre_process(int32_t *trace, int32_t length) {
     int32_t result_length = 1;
@@ -110,34 +109,41 @@ void mrda_calculate_local_rd(int32_t *trace, int32_t *dist, int32_t start, int32
     }
 }
 
-void mrda_calculate_rd(mrda_world world) {
-    int32_t owner = 0;    
+void mrda_run_reuse_distance_analysis(int32_t *trace, int32_t *dist, int trace_length, int fragment_length) {
+    int chunk_length = ceil((float)trace_length / fragment_length);
+    mrda_chunk *chunks = (mrda_chunk*)MRDA_MALLOC(chunk_length * sizeof(mrda_chunk));
+
+    for (int i = 0; i < chunk_length; i++) {
+        chunks[i].owner = -1;
+        chunks[i].status = UNPROCESSED;
+    }
+
+    int32_t owner = 0;
     int32_t last_processed_chunk_index = -1;
         
-    while (mrda_can_processed(world.chunks, world.chunk_length)) {
+    while (mrda_can_processed(chunks, chunk_length)) {
         int32_t chunk_index = mrda_find_unprocessed_chunk(
-            world.chunks,
-            world.chunk_length, last_processed_chunk_index);
+            chunks,
+            chunk_length,
+            last_processed_chunk_index);
         
         if (chunk_index == -1) {
             break;
         }
 
-        world.chunks[chunk_index].status = PROCESSING;
-        world.chunks[chunk_index].owner = owner;
+        chunks[chunk_index].status = PROCESSING;
+        chunks[chunk_index].owner = owner;
         
-        int32_t start = chunk_index * world.local_length;
-        int32_t length = world.local_length;
-        
-        if (length > world.global_length - start) {
-            length = world.global_length - start;
-        }
+        int32_t start = chunk_index * fragment_length;
+        int32_t length = MRDA_MIN(fragment_length, trace_length - start);
 
-        mrda_calculate_local_rd(world.trace, world.dist, start, length);
+        mrda_calculate_local_rd(trace, dist, start, length);
 
-        world.chunks[chunk_index].status = DONE;
+        chunks[chunk_index].status = DONE;
         last_processed_chunk_index = chunk_index;
     }
+
+    MRDA_FREE(chunks);
 }
 
 #endif // MY_RD_ALGORITHM
